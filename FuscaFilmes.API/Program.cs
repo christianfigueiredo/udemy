@@ -1,5 +1,6 @@
 using FuscaFilmes.API.DbContexts;
 using FuscaFilmes.API.Entities;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,11 @@ using (var contexto = new Contexto())
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+{
+    options.SerializerOptions.AllowTrailingCommas = true;
+    options.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+});
 
 var app = builder.Build();
 
@@ -22,16 +28,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapGet("/diretor", () =>
+app.MapGet("/diretores", () =>
 {
     using var contexto = new Contexto();
-    var diretores = contexto.Diretores.ToList();
+    var diretores = contexto.Diretores.Include(d => d.Filmes).ToList();
     return diretores;
 })
 
 .WithOpenApi();
 
-app.MapPost("/diretor", (Diretor diretor) =>
+app.MapPost("/diretores", (Diretor diretor) =>
 {
     using var contexto = new Contexto();
     contexto.Diretores.Add(diretor);
@@ -39,7 +45,7 @@ app.MapPost("/diretor", (Diretor diretor) =>
 })
 .WithOpenApi();
 
-app.MapPut("/diretor/{id}", (int Diretorid, Diretor diretorNovo) =>
+app.MapPut("/diretores/{id}", (int Diretorid, Diretor diretorNovo) =>
 {
     using var contexto = new Contexto();
     var diretorDb = contexto.Diretores.Find(Diretorid);
@@ -59,7 +65,7 @@ app.MapPut("/diretor/{id}", (int Diretorid, Diretor diretorNovo) =>
 })
 .WithOpenApi();
 
-app.MapDelete("/diretor/{id}", (int id) =>
+app.MapDelete("/diretores/{id}", (int id) =>
 {
     using var contexto = new Contexto();
     var diretor = contexto.Diretores.Find(id);
