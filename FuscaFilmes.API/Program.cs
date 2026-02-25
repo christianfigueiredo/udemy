@@ -4,10 +4,15 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-using (var contexto = new Contexto())
+builder.Services.AddDbContext<Contexto>(options =>
+
+    options.UseSqlite(builder.Configuration["ConnectionStrings:FuscaFilmesStr"])
+);
+
+/* using (var contexto = new Contexto())
 {
     contexto.Database.EnsureCreated();
-}
+} */
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -28,26 +33,23 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapGet("/diretores", () =>
+app.MapGet("/diretores", (Contexto contexto) =>
 {
-    using var contexto = new Contexto();
-    var diretores = contexto.Diretores.Include(d => d.Filmes).ToList();
-    return diretores;
+    return contexto.Diretores.Include(d => d.Filmes).ToList();
+   
 })
 
 .WithOpenApi();
 
-app.MapPost("/diretores", (Diretor diretor) =>
+app.MapPost("/diretores", (Diretor diretor,Contexto contexto) =>
 {
-    using var contexto = new Contexto();
     contexto.Diretores.Add(diretor);
     contexto.SaveChanges();   
 })
 .WithOpenApi();
 
-app.MapPut("/diretores/{id}", (int Diretorid, Diretor diretorNovo) =>
+app.MapPut("/diretores/{id}", (int Diretorid, Diretor diretorNovo, Contexto contexto) =>
 {
-    using var contexto = new Contexto();
     var diretorDb = contexto.Diretores.Find(Diretorid);
     if (diretorDb != null){
         diretorDb.Nome = diretorNovo.Nome;
@@ -65,9 +67,8 @@ app.MapPut("/diretores/{id}", (int Diretorid, Diretor diretorNovo) =>
 })
 .WithOpenApi();
 
-app.MapDelete("/diretores/{id}", (int id) =>
+app.MapDelete("/diretores/{id}", (int id,Contexto contexto) =>
 {
-    using var contexto = new Contexto();
     var diretor = contexto.Diretores.Find(id);
     if (diretor != null)
         contexto.Diretores.Remove(diretor);
